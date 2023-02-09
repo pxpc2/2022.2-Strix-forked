@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import Head from 'next/head';
 import styles from '../../../styles/Home.module.scss';
 import CustomizedInputs from '../../components/ui/StyledInputs/CustomizedInputs';
@@ -11,10 +11,11 @@ import { Header } from '../../components/Header';
 import { setupAPIClient } from '../../services/api';
 import MenuItem from '@mui/material/MenuItem';
 import Router from 'next/router';
+import { api } from '../../services/apiClient';
 
-export default function RegisterExercise({ listCategories }) {
+export default function EditExercise({ listCategories }) {
 
-  const { registerExercise } = useContext(AuthContext);
+  const { idExercise, updatedExercise, deleteExercise  } = useContext(AuthContext);
 
   const [name, setName] = useState(''); 
   const [reps, setReps] = useState('');
@@ -22,50 +23,73 @@ export default function RegisterExercise({ listCategories }) {
   const [observation, setObservation] = useState('');
   const [category_name, setCategory_name] = useState('');
 
-  async function handleRegisterExercise(event){
-    event.preventDefault();
+  async function detailExerciseRequest(x){
+    try {
+      const response = await api.get('/exercise/detail', {
+        params:{
+          id: x
+        }
+      });
 
-    if(name === '' || reps === '' || time === '' || category_name === '' || observation === '') {
-      toast.error("Preencha os campos!");
-      return;
+      const { name,  reps, time, observation, category_name } = response.data;
+      setName(name);
+      setReps(reps);
+      setTime(time);
+      setObservation(observation);
+      setCategory_name(category_name);
+      console.log('detalhes do exercício pego com sucesso!')
+    } catch (error) {
+      console.log('Erro ao tentar puxar os detalhes do exercício!', error);
     }
-
-    let data = {
-        name,
-        reps,
-        time,
-        category_name,
-        observation
-    }
-
-    console.log(data)
-
-    await registerExercise(data);
-    setName('');
-    setObservation('');
-    setReps('');
-    setTime('');
-    setCategory_name('');
   }
 
-  function handleRegisterLink(){
-    Router.push('/registerCategory');
+  useEffect(() => {
+    detailExerciseRequest(idExercise);
+  }, []);
+
+  async function handleEditExercise(event){
+    event.preventDefault();
+
+    let data = {
+      "id": idExercise,
+      name,
+      reps,
+      time,
+      observation,
+      category_name
+    }
+
+    console.log(data);
+
+    await updatedExercise(data);
+
+    //alert('Salvar edição!');
+  }
+
+  async function handleDeleteExercise(){
+    //alert('Deletar exercício');
+    let data = {
+      "exercise_id": idExercise
+    }
+
+    await deleteExercise(data);
+    
   }
   
   return (
     <>
     <Head>
-      <title>Strix - Cadastre um exercício</title>
+      <title>Strix - Edite um exercício</title>
     </Head>
     <Header />
     <div className={styles.containerCenterRegister}>
       <div className={styles.login}> 
         
-        <Link href="/registerExercise" className={styles.subtitulo}>
-          Exercícios
+        <Link href="/editExercise" className={styles.subtitulo}>
+          Editar Exercícios
         </Link>
 
-        <form onSubmit={handleRegisterExercise}>
+        <form onSubmit={handleEditExercise}>
           <CustomizedInputs
             size='small' 
             label={'Nome do exercício *'} 
@@ -128,11 +152,11 @@ export default function RegisterExercise({ listCategories }) {
           />
 
           <p className={styles.msg}>* Campo Obrigatório</p>
-          <Button type='submit'>Cadastrar Exercício</Button> 
-          <Button onClick={handleRegisterLink} type='button' style={{ 
+          <Button type='submit'>Salvar</Button> 
+          <Button onClick={handleDeleteExercise} type='button' style={{ 
           backgroundColor: '#AF3A3A',
           marginTop: '2rem'
-        }}>Cadastrar Nova Categoria</Button> 
+        }}>Deletar</Button> 
         </form>
         
       </div>
@@ -142,11 +166,11 @@ export default function RegisterExercise({ listCategories }) {
 }
 
 export const getServerSideProps = canSSRAuth(async (ctx) => {
-  const apiClient = setupAPIClient(ctx);
-  const response = await apiClient.get('/listCategories');
-  return {
-      props: {
-        listCategories: response.data
-      },
-    };
-});
+    const apiClient = setupAPIClient(ctx);
+    const response = await apiClient.get('/listCategories');
+    return {
+        props: {
+          listCategories: response.data
+        }
+    }
+  })

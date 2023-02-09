@@ -54,7 +54,9 @@ export default function RegisterStudent() {
       return;
     }
 
+
     const user_id = "50f7bb58-eaa3-4526-ae3a-7e21be655830"; // Como só temos um usuário, esse id é único
+
 
     let data = {
       name,

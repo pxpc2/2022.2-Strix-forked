@@ -23,6 +23,14 @@ export function AuthProvider({ children }){
     const [pendencyStudentId, setPendencyStudentId] = useState('');
     const [pendencyStudentName, setPendencyStudentName] = useState('');
     const [pendencyId, setPendencyId] = useState('');
+    const [idExercise, setIdExercise] = useState('');
+    const [trainingName, setTrainingName] = useState('');
+    const [classID, setClassID] = useState(''); // PARA CONTROLAR O ID DA AULA QUE VAI SER EDITADA
+    const [trainingId, setTrainingId] = useState('');
+
+
+    // email do aluno selecionado
+    const[nameStudent, setNameStudent] = useState('');
 
     useEffect(() => {
         // Tentar pegar algo no cookie
@@ -88,12 +96,10 @@ export function AuthProvider({ children }){
                 email,
                 user_id
             })
-
             toast.success('Aluno cadastrado com sucesso!');
             Router.push('/students');
         }catch(err){
-            toast.error("Erro ao cadastrar!");
-            console.log("erro ao cadastrar aluno ", err)
+            toast.error("Erro ao cadastrar: " + err.response.data.error);
         }
     }
 
@@ -114,8 +120,8 @@ export function AuthProvider({ children }){
             toast.success('Dados editado com sucesso!');
             Router.push('/students');
         }catch(error){
-          toast.error("Erro ao editar!");
-          console.log("erro ao cadastrar aluno ", error);
+          toast.error("Erro ao editar: " + error.response.data.error);
+          console.log("erro ao cadastrar aluno ", error.response.data);
         }
     }
 
@@ -209,6 +215,18 @@ export function AuthProvider({ children }){
         }
     }
 
+    async function registerClass({name, date, time, duration, studentID, studentName}) {
+        try {
+            const res = await api.post('/class', {
+                name, date, time, duration, studentID, studentName
+            });
+            toast.success("Aula registrada com sucesso!");
+            Router.push('/aulas')
+        } catch (err) {
+            toast.error("Erro ao cadastrar aula: " + err);
+        }
+    }
+
     async function studentPendenciesState(id) {
         setPendencyStudentId(id);
     }
@@ -221,14 +239,67 @@ export function AuthProvider({ children }){
         setListIdExercise(id);
     }
 
+    async function pickUpIdExercise(id){
+        setIdExercise(id);
+    }
+
+    async function updatedExercise({ id, name, reps, time, observation, category_name }){
+        try{
+            const response = await api.put('/updateExercise', {
+              id,
+              name,
+              reps,
+              time,
+              observation,
+              category_name
+              
+            })
+            toast.success('Dados atualizados com sucesso!');
+            Router.push('/viewExercises');
+        }catch(error){
+          toast.error("Erro ao editar!");
+          console.log("Erro ao atualizar os dados do exercício ", error);
+        }
+    }
+
+    async function deleteExercise({ exercise_id }){
+        try{
+            const response = await api.delete('/exerciseDelete', {
+                params:{
+                    exercise_id: exercise_id,
+                }
+            })
+            toast.success('Exercício deletado com sucesso!');
+            Router.push('/viewExercises');
+        }catch(error){
+            toast.error("Erro ao deletar Exercício.");
+            console.log('Erro ao remover Exercício.', error)
+        }
+    }
+
+    async function pickUpNameTraining(name){
+        setTrainingName(name);
+    }
+
+
     async function setDetailedPendency(id) {
         setPendencyId(id);
+    }
+
+    async function pickUpNameStudent(name){
+        setNameStudent(name);
+    }
+
+    async function pickUpIdTraining(id){
+        setTrainingId(id);
     }
     
     return(
         <AuthContext.Provider value={{ user, isAuthenticated, signIn, signOut, registerStudent, studentIdState, idState, updatedStudent,
          deleteStudent, registerCategories, registerExercise, exerciseListIdState, listIdExercise, registerPendency,
-          studentPendenciesState, pendencyStudentId,updatePendency, studentName, pendencyStudentName, deletePendency, pendencyId, setDetailedPendency }}>
+          studentPendenciesState, pendencyStudentId,updatePendency, studentName, pendencyStudentName, deletePendency,
+           pendencyId, setDetailedPendency, pickUpIdExercise, idExercise, updatedExercise, deleteExercise, pickUpNameTraining, trainingName, nameStudent, pickUpNameStudent, trainingId, pickUpIdTraining,
+            registerClass }}>
             {children}
         </AuthContext.Provider>
     )
